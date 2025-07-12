@@ -1,9 +1,7 @@
 ﻿using Microsoft.Diagnostics.Tracing;
 using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using YAETWi.Core;
 using System.Collections.Concurrent;
 
@@ -69,7 +67,14 @@ namespace YAETWi.Helper
             Console.WriteLine("\nPIDs: ");
             foreach (int pid in Program.pids)
             {
-                Console.WriteLine(String.Format("{0} -> {1}", pid, Process.GetProcessById(pid).ProcessName));
+                try
+                {
+                    Console.WriteLine(String.Format("{0} -> {1}", pid, Process.GetProcessById(pid).ProcessName));
+                }
+                catch (Exception e)
+                {
+                    printWarn($"PID {pid} doesn't exist anymore");
+                }
             }
         }
 

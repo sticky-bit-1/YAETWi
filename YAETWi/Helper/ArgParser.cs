@@ -1,10 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace YAETWi.Helper
 {
@@ -12,7 +7,7 @@ namespace YAETWi.Helper
     {
         public enum Parameters
         { 
-            pids,
+            pid,
             externalIP,
             provider,
             verbose,

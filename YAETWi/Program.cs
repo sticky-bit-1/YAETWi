@@ -22,6 +22,12 @@ namespace YAETWi
 
         static void Main(string[] args)
         {
+            if (!Utils.isPrivileged())
+            {
+                Console.WriteLine("For this program to work properly, you must run it as an administrator.");
+                Environment.Exit(1);
+            }
+
             parameters = Helper.ArgParser.parse(args);
             if (parameters.ContainsKey(ArgParser.Parameters.kernel.ToString()))
                 kernel = true;
@@ -48,9 +54,9 @@ namespace YAETWi
 
                 Task.Run(() => tcpipKernelSession.Source.Process());
 
-            } else if (parameters.ContainsKey(ArgParser.Parameters.pids.ToString()))
+            } else if (parameters.ContainsKey(ArgParser.Parameters.pid.ToString()))
             {
-                ArgParser.readPids(parameters[ArgParser.Parameters.pids.ToString()], pids);
+                ArgParser.readPids(parameters[ArgParser.Parameters.pid.ToString()], pids);
             }
             else
             {
@@ -68,6 +74,8 @@ namespace YAETWi
             {
                 ETW.traceAllProviders(allProvidersSession);
             }
+
+            Helper.Help.keystrokes();
 
             var start = DateTime.Now;
 
@@ -112,8 +120,10 @@ namespace YAETWi
                             {
                                 Logger.dumpETWProvider(p);
                             }
-                            break;
+
+                            Helper.Help.keystrokes();
                         }
+                        break;
                     case ConsoleKey.W:
                         {
                             Console.Write("Enter provider name:");
@@ -121,8 +131,10 @@ namespace YAETWi
                             Console.Write("Enter directory to save file in (if empty, the file will be kept in the current directory):");
                             string d = Console.ReadLine();
                             Logger.writeETWProvider(p, d);
-                            break;
+
+                            Helper.Help.keystrokes();
                         }
+                        break;
                     case ConsoleKey.D:
                         {
                             Logger.printPids();
@@ -133,6 +145,8 @@ namespace YAETWi
                             }
                             else
                                 Logger.dumpETWProviders();
+
+                            Helper.Help.keystrokes();
                         }
                         break;
                     case ConsoleKey.C:
@@ -140,6 +154,8 @@ namespace YAETWi
                             Program.pids = new HashSet<int>();
                             ETW.refreshCollection();
                             Logger.printInfo("Purged collections");
+
+                            Helper.Help.keystrokes();
                         }
                         break;
                     case ConsoleKey.P:
@@ -148,13 +164,15 @@ namespace YAETWi
                             string input = Console.ReadLine();
                             ETW.refreshCollection();
                             ArgParser.readPids(input, pids);
-                            break;
+
+                            Helper.Help.keystrokes();
                         }
+                        break;
                     case ConsoleKey.H:
                         {
                             Helper.Help.keystrokes();
-                            break;
                         }
+                        break;
                 }
             }
         }
