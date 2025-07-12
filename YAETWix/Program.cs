@@ -1,67 +1,9 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 
 namespace YAETWix
 {
     public class Program
     {
-        [StructLayout(LayoutKind.Sequential)]
-        struct STARTUPINFO
-        {
-            public Int32 cb;
-            public IntPtr lpReserved;
-            public IntPtr lpDesktop;
-            public IntPtr lpTitle;
-            public Int32 dwX;
-            public Int32 dwY;
-            public Int32 dwXSize;
-            public Int32 dwYSize;
-            public Int32 dwXCountChars;
-            public Int32 dwYCountChars;
-            public Int32 dwFillAttribute;
-            public Int32 dwFlags;
-            public Int16 wShowWindow;
-            public Int16 cbReserved2;
-            public IntPtr lpReserved2;
-            public IntPtr hStdInput;
-            public IntPtr hStdOutput;
-            public IntPtr hStdError;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct PROCESS_INFORMATION
-        {
-            public IntPtr hProcess;
-            public IntPtr hThread;
-            public int dwProcessId;
-            public int dwThreadId;
-        }
-
-        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
-        static extern bool CreateProcess(
-            string lpApplicationName,
-            string lpCommandLine,
-            IntPtr lpProcessAttributes,
-            IntPtr lpThreadAttributes,
-            bool bInheritHandles,
-            uint dwCreationFlags,
-            IntPtr lpEnvironment,
-            string lpCurrentDirectory,
-            [In] ref STARTUPINFO lpStartupInfo,
-            out PROCESS_INFORMATION lpProcessInformation);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern uint ResumeThread(IntPtr hThread);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
-
-        private enum dwCreationFlags
-        {
-            CREATE_SUSPENDED = 0x04
-        }
-
         private static void usage()
         {
             Console.WriteLine(String.Format("Usage:\n" +
@@ -79,29 +21,32 @@ namespace YAETWix
                 usage();
                 Environment.Exit(0);
             }
+            
+            Win32.STARTUPINFO si = new Win32.STARTUPINFO();
+            Win32.PROCESS_INFORMATION pi = new Win32.PROCESS_INFORMATION();
+            
+            var start = DateTime.Now;
 
-            STARTUPINFO si = new STARTUPINFO();
-            PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
-
-            bool res = CreateProcess(null, 
+            bool res = Win32.CreateProcess(null, 
                 args[0] + "\0", 
                 IntPtr.Zero, 
                 IntPtr.Zero, 
-                false, 
-                ((uint)dwCreationFlags.CREATE_SUSPENDED), 
+                false,
+                (uint)Win32.dwCreationFlags.DEBUG_ONLY_THIS_PROCESS,
                 IntPtr.Zero, 
                 null, 
                 ref si, 
                 out pi);
 
             Console.WriteLine(String.Format("[!] Process has been created\n" +
-                "[*] PID: {0}\n[*] to resume process -> enter 'r'\n" +
-                "[*] to terminate process -> enter CTRL+C", pi.dwProcessId));
+                "[*] Creation time: {0}\n" +
+                "[*] PID: {1}\n[*] to resume process -> enter 'r'\n" +
+                "[*] to terminate process -> enter CTRL+C", start, pi.dwProcessId));
 
             Console.CancelKeyPress += delegate (object sender, ConsoleCancelEventArgs e)
             {
-                Console.WriteLine(String.Format("[!] Terminating process {0}", pi.dwProcessId));
-                TerminateProcess(pi.hProcess, 0);
+                Console.WriteLine(String.Format("[!] Terminating process {0}\n", pi.dwProcessId));
+                Win32.TerminateProcess(pi.hProcess, 0);
                 Environment.Exit(0);
             };
 
@@ -112,13 +57,33 @@ namespace YAETWix
                 switch (cki.Key)
                 {
                     case ConsoleKey.R:
-                        Console.WriteLine(String.Format("\n[!] Process {0} has been resumed\n" +
-                            "[*] to terminate from inside the process -> Ctrl+C", pi.dwProcessId));
-                        ResumeThread(pi.hThread);
-                        break;
+                    {
+                            Console.WriteLine(String.Format("\n[!] Process {0} has been resumed\n", pi.dwProcessId));
+
+                            Win32.DEBUG_EVENT debug_event = new Win32.DEBUG_EVENT();
+
+                            while (Win32.WaitForDebugEvent(ref debug_event, uint.MaxValue))
+                            {
+                                switch (debug_event.dwDebugEventCode)
+                                {
+                                    case (int)Win32.dwDebugEventCode.EXIT_PROCESS_DEBUG_EVENT:
+                                        {
+                                            var end = DateTime.Now;
+                                            Console.WriteLine("Catched process trying to finish. Termination time: [{0}]", end);
+                                            goto termination;
+                                        }
+                                        break;
+                                    default:
+                                        Win32.ContinueDebugEvent((uint)debug_event.dwProcessId, (uint)debug_event.dwThreadId, 0x00010002);
+                                        break;
+                                }
+                            }
+                     }
+                     break;
                 }
             }
-
+        termination:
+            Environment.Exit(0);
         }
     }
 }
