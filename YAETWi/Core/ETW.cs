@@ -6,7 +6,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
-using System.Linq;
 using System.Threading.Tasks;
 using YAETWi.Data;
 using YAETWi.Helper;
@@ -52,7 +51,6 @@ namespace YAETWi.Core
                         t.templateMap = describeTemplates(p);
                         t.isTraced = false;
                         providerTracerMap.TryAdd(guid, t);
-
                     }
                     catch (Exception){}
                 }
@@ -64,7 +62,7 @@ namespace YAETWi.Core
         {
             session = new TraceEventSession("kernel session");
             Logger.printInfo("starting kernel session");
-            Logger.printWarn("see source code to specify the messages on particular Kernel providers -> no support for formatted messages for the Kernel events is provided by the Microsoft.Diagnostics.Tracing.Parsers.Kernel");
+            Logger.printWarn("see source code to specify the messages on particular Kernel providers\n");
             session.EnableKernelProvider(KernelTraceEventParser.Keywords.All);
 
             session.Source.Kernel.All += ((TraceEvent data) =>

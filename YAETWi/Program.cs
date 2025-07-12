@@ -114,7 +114,7 @@ namespace YAETWi
                             if (kernel)
                             {
                                 kProvider = p;
-                                Console.WriteLine(String.Format("Started listener for {0} provider. Waiting for connections.\n", kProvider));
+                                Console.WriteLine(String.Format("Started listener for {0} provider -> no historical data for kernel events, only live logging.\n", kProvider));
                             }
                             else
                             {
