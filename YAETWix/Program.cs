@@ -69,7 +69,8 @@ namespace YAETWix
                                     case (int)Win32.dwDebugEventCode.EXIT_PROCESS_DEBUG_EVENT:
                                         {
                                             var end = DateTime.Now;
-                                            Console.WriteLine("Catched process trying to finish. Termination time: [{0}]", end);
+                                            Console.WriteLine("Catched process trying to finish @ [{0}].\nThe process has been suspended. Enter to continue > ", end);
+                                            Console.ReadLine();
                                             goto termination;
                                         }
                                         break;
